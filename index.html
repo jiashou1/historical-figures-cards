@@ -41,7 +41,7 @@
             opacity: 0.9;
         }
 
-        /* 设置按钮 / Settings button */
+        /* 设置按钮 */
         .settings-btn {
             position: absolute;
             top: 0;
@@ -121,7 +121,7 @@
             margin-top: 5px;
         }
 
-        /* 内容卡片 / Content card */
+        /* 内容卡片 */
         .content-card {
             background: white;
             border-radius: 15px;
@@ -145,7 +145,7 @@
             min-height: 200px;
         }
 
-        /* 基本信息 / Basic info */
+        /* 基本信息 */
         .basic-info {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -177,7 +177,7 @@
             font-weight: 500;
         }
 
-        /* 时间线 / Timeline */
+        /* 时间线 */
         .timeline {
             margin-top: 20px;
         }
@@ -228,7 +228,7 @@
             line-height: 1.7;
         }
 
-        /* 置信度颜色 / Confidence colors */
+        /* 置信度颜色 */
         .confidence-high {
             color: #4caf50;
         }
@@ -256,7 +256,7 @@
             margin-right: 4px;
         }
 
-        /* 加载状态 / Loading state */
+        /* 加载状态 */
         .loading {
             text-align: center;
             padding: 40px;
@@ -280,7 +280,7 @@
             to { transform: rotate(360deg); }
         }
 
-        /* 流式输出光标 / Streaming cursor */
+        /* 流式输出光标 */
         .streaming-cursor::after {
             content: '▌';
             animation: blink 1s infinite;
@@ -298,7 +298,7 @@
             font-style: italic;
         }
 
-        /* 弹窗 / Modal */
+        /* 弹窗 */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -395,7 +395,7 @@
             text-decoration: underline;
         }
 
-        /* 错误提示 / Error message */
+        /* 错误提示 */
         .error {
             text-align: center;
             padding: 30px;
@@ -404,7 +404,7 @@
             border-radius: 10px;
         }
 
-        /* 底部提示 / Footer notice */
+        /* 底部提示 */
         .footer {
             text-align: center;
             color: white;
@@ -447,7 +447,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <button class="settings-btn" id="settingsBtn" onclick="openSettingsModal()" title="设置 API Key / Set API Key">
+            <button class="settings-btn" id="settingsBtn" onclick="openSettingsModal()" title="设置 API Key">
                 <svg viewBox="0 0 24 24">
                     <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
                 </svg>
@@ -488,7 +488,7 @@
         </div>
     </div>
 
-    <!-- 设置弹窗 / Settings Modal -->
+    <!-- 设置弹窗 -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
             <h3>⚙️ 设置 API Key</h3>
@@ -508,10 +508,10 @@
     </div>
 
     <script>
-        // 历史人物数据 / Historical figures data
+        // 历史人物数据
         const FIGURES = [];
 
-        // DOM 元素 / DOM elements
+        // DOM 元素
         const personNameEl = document.getElementById('personName');
         const countInfoEl = document.getElementById('countInfo');
         const aiContentEl = document.getElementById('aiContent');
@@ -520,18 +520,18 @@
         const settingsModal = document.getElementById('settingsModal');
         const apiKeyInput = document.getElementById('apiKeyInput');
 
-        // 当前人物 / Current figure
+        // 当前人物
         let currentName = '';
         // API Key
         let apiKey = '';
 
-        // 初始化 / Initialize
+        // 初始化
         function init() {
             loadApiKey();
             loadFiguresData();
         }
 
-        // 加载 API Key / Load API Key
+        // 加载 API Key
         function loadApiKey() {
             apiKey = localStorage.getItem('qwen_api_key') || '';
             updateSettingsBtnState();
@@ -540,7 +540,7 @@
             }
         }
 
-        // 更新设置按钮状态 / Update settings button state
+        // 更新设置按钮状态
         function updateSettingsBtnState() {
             if (apiKey) {
                 settingsBtn.classList.add('configured');
@@ -549,22 +549,22 @@
             }
         }
 
-        // 打开设置弹窗 / Open settings modal
+        // 打开设置弹窗
         function openSettingsModal() {
             apiKeyInput.value = apiKey;
             settingsModal.classList.add('active');
         }
 
-        // 关闭设置弹窗 / Close settings modal
+        // 关闭设置弹窗
         function closeSettingsModal() {
             settingsModal.classList.remove('active');
         }
 
-        // 保存 API Key / Save API Key
+        // 保存 API Key
         function saveApiKey() {
             const key = apiKeyInput.value.trim();
             if (!key) {
-                alert('请输入 API Key / Please enter API Key');
+                alert('请输入 API Key');
                 return;
             }
             apiKey = key;
@@ -573,23 +573,23 @@
             closeSettingsModal();
         }
 
-        // 随机选择人物 / Randomly select a figure
+        // 随机选择人物
         function getRandomFigure() {
             const index = Math.floor(Math.random() * FIGURES.length);
             return FIGURES[index];
         }
 
-        // 显示加载状态 / Show loading state
+        // 显示加载状态
         function showLoading() {
             aiContentEl.innerHTML = '<div class="loading">AI 正在生成内容...<span class="loading-dots"></span></div>';
         }
 
-        // 显示错误 / Show error
+        // 显示错误
         function showError(message) {
             aiContentEl.innerHTML = `<div class="error">${message}</div>`;
         }
 
-        // 获取置信度 CSS 类 / Get confidence CSS class
+        // 获取置信度 CSS 类
         function getConfidenceClass(confidence) {
             const c = confidence?.toLowerCase();
             if (c === '高') return 'confidence-high confidence-dot-high';
@@ -597,7 +597,7 @@
             return 'confidence-low confidence-dot-low';
         }
 
-        // 渲染基本信息 / Render basic info
+        // 渲染基本信息
         function renderBasicInfo(info) {
             const fields = [
                 { key: 'name', label: '姓名' },
@@ -630,7 +630,7 @@
             return html;
         }
 
-        // 渲染时间线 / Render timeline
+        // 渲染时间线
         function renderTimeline(timeline) {
             if (!timeline || !timeline.length) return '';
 
@@ -653,15 +653,15 @@
             return html;
         }
 
-        // 渲染流式文本 / Render streaming text
+        // 渲染流式文本
         function renderStreamingText(text) {
             aiContentEl.innerHTML = `<div class="streaming-cursor">${text.replace(/\n/g, '<br>')}</div>`;
         }
 
-        // 渲染最终内容 / Render final content
+        // 渲染最终内容
         function renderContent(data) {
             try {
-                // 尝试解析 JSON / Try to parse JSON
+                // 尝试解析 JSON
                 const parsed = JSON.parse(data);
 
                 let html = '';
@@ -678,12 +678,12 @@
                     aiContentEl.innerHTML = `<p>${data.replace(/\n/g, '<br>')}</p>`;
                 }
             } catch (e) {
-                // JSON 解析失败，直接显示文本 / JSON parse failed, show text directly
+                // JSON 解析失败，直接显示文本
                 aiContentEl.innerHTML = `<p>${data.replace(/\n/g, '<br>')}</p>`;
             }
         }
 
-        // Prompt 模板 / Prompt template
+        // Prompt 模板
         function buildPrompt(name) {
             return `你是一位严谨的历史学者，擅长考证史料。请为以下历史人物生成详细的生平资料。
 
@@ -737,32 +737,26 @@ ${name}
 请只输出 JSON，不要输出任何其他文字。`;
         }
 
-        // 调用通义千问 API（流式）/ Call Qwen API (streaming)
+        // 获取 API URL（支持 CORS 代理）
+        function getApiUrl() {
+            const apiEndpoint = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            // 本地直接调用，线上使用 CORS 代理
+            return isLocal ? apiEndpoint : `https://corsproxy.io/${encodeURIComponent(apiEndpoint)}`;
+        }
+
+        // 调用通义千问 API（流式）
         async function callQwenAPI(name) {
             if (!apiKey) {
                 openSettingsModal();
-                showError('请先设置 API Key / Please set API Key first');
+                showError('请先设置 API Key');
                 return;
             }
 
             showLoading();
 
+            const url = getApiUrl();
             const prompt = buildPrompt(name);
-
-            // 检测是否为 file:// 协议
-            if (window.location.protocol === 'file:') {
-                showError(`请使用本地服务器运行，不要直接打开 HTML 文件<br><small>请运行: python3 -m http.server 8080<br>然后访问: http://localhost:8080</small>`);
-                return;
-            }
-
-            // 根据运行环境选择 API 调用方式
-            const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiEndpoint = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
-
-            // 本地使用代理，线上使用 CORS 代理服务
-            const url = isLocalServer
-                ? '/api/qwen'
-                : `https://corsproxy.io/${encodeURIComponent(apiEndpoint)}`;
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 90000);
@@ -802,21 +796,19 @@ ${name}
                         errorMsg = errorText || response.statusText;
                     }
 
-                    console.error('API Error Response:', errorText);
-
                     if (response.status === 400) {
-                        showError(`请求参数错误 / Bad Request<br><small>${errorMsg}</small>`);
+                        showError(`请求参数错误<br><small>${errorMsg}</small>`);
                     } else if (response.status === 401 || response.status === 403) {
-                        showError(`API Key 无效，请检查设置 / Invalid API Key<br><small>${errorMsg}</small>`);
+                        showError(`API Key 无效，请检查设置<br><small>${errorMsg}</small>`);
                     } else if (response.status === 429) {
-                        showError(`请求过于频繁，请稍后再试 / Rate limited<br><small>${errorMsg}</small>`);
+                        showError(`请求过于频繁，请稍后再试<br><small>${errorMsg}</small>`);
                     } else {
-                        showError(`API 调用失败 (${response.status}) / API call failed<br><small>${errorMsg}</small>`);
+                        showError(`API 调用失败 (${response.status})<br><small>${errorMsg}</small>`);
                     }
                     return;
                 }
 
-                // 流式读取 / Stream reading
+                // 流式读取
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullContent = '';
@@ -828,9 +820,9 @@ ${name}
 
                     buffer += decoder.decode(value, { stream: true });
 
-                    // 解析 SSE 数据 / Parse SSE data
+                    // 解析 SSE 数据
                     const lines = buffer.split('\n');
-                    buffer = lines.pop() || ''; // 保留未完成的行
+                    buffer = lines.pop() || '';
 
                     for (const line of lines) {
                         if (line.startsWith('data:')) {
@@ -847,15 +839,15 @@ ${name}
                                     renderStreamingText(fullContent);
                                 }
                             } catch (e) {
-                                // 忽略解析错误 / Ignore parse errors
+                                // 忽略解析错误
                             }
                         }
                     }
                 }
 
-                // 渲染最终内容 / Render final content
+                // 渲染最终内容
                 if (fullContent) {
-                    // 提取 JSON 部分 / Extract JSON part
+                    // 提取 JSON 部分
                     const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
                     if (jsonMatch) {
                         renderContent(jsonMatch[0]);
@@ -863,7 +855,7 @@ ${name}
                         renderContent(fullContent);
                     }
                 } else {
-                    showError('AI 未返回有效内容 / AI returned no valid content');
+                    showError('AI 未返回有效内容');
                 }
 
             } catch (error) {
@@ -872,22 +864,20 @@ ${name}
 
                 let errorMsg = '';
                 if (error.name === 'AbortError') {
-                    errorMsg = '请求超时 / Request timeout<br><small>请检查网络连接后重试</small>';
+                    errorMsg = '请求超时<br><small>请检查网络连接后重试</small>';
                 } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    errorMsg = `网络请求失败 / Network error<br><small>可能原因：<br>1. 浏览器 CORS 策略阻止了请求<br>2. 网络连接问题<br><br>建议：请确保使用本地服务器运行（如 python3 -m http.server 8080）</small>`;
-                } else if (error.message.includes('CORS') || error.message.includes('cross-origin')) {
-                    errorMsg = `跨域请求被阻止 / CORS blocked<br><small>请使用本地代理服务器或后端转发请求</small>`;
+                    errorMsg = `网络请求失败<br><small>可能是 CORS 限制或网络问题</small>`;
                 } else {
-                    errorMsg = `网络请求失败 / Network error<br><small>${error.message}</small>`;
+                    errorMsg = `网络请求失败<br><small>${error.message}</small>`;
                 }
                 showError(errorMsg);
             }
         }
 
-        // 加载随机人物 / Load random figure
+        // 加载随机人物
         async function loadRandomFigure() {
             if (FIGURES.length === 0) {
-                personNameEl.textContent = '数据加载中... / Loading data...';
+                personNameEl.textContent = '数据加载中...';
                 return;
             }
 
@@ -897,11 +887,11 @@ ${name}
             }
 
             refreshBtn.disabled = true;
-            refreshBtn.textContent = '加载中... / Loading...';
+            refreshBtn.textContent = '加载中...';
 
             currentName = getRandomFigure();
             personNameEl.textContent = currentName;
-            countInfoEl.textContent = `（共 ${FIGURES.length} 位历史人物 / ${FIGURES.length} historical figures）`;
+            countInfoEl.textContent = `（共 ${FIGURES.length} 位历史人物）`;
 
             await callQwenAPI(currentName);
 
@@ -909,27 +899,27 @@ ${name}
             refreshBtn.textContent = '换一个';
         }
 
-        // 加载人物数据 / Load figures data
+        // 加载人物数据
         async function loadFiguresData() {
             try {
                 const response = await fetch('figures.json');
                 const data = await response.json();
                 FIGURES.push(...data);
-                console.log(`已加载 ${FIGURES.length} 位历史人物 / Loaded ${FIGURES.length} figures`);
+                console.log(`已加载 ${FIGURES.length} 位历史人物`);
             } catch (error) {
                 console.error('Failed to load figures data:', error);
-                personNameEl.textContent = '数据加载失败 / Data loading failed';
+                personNameEl.textContent = '数据加载失败';
             }
         }
 
-        // 点击弹窗外部关闭 / Close modal when clicking outside
+        // 点击弹窗外部关闭
         settingsModal.addEventListener('click', (e) => {
             if (e.target === settingsModal) {
                 closeSettingsModal();
             }
         });
 
-        // 初始化 / Initialize
+        // 初始化
         init();
     </script>
 </body>
