@@ -524,14 +524,88 @@
         let currentName = '';
         // API Key
         let apiKey = '';
+        // 是否正在预加载
+        let isPrefetching = false;
 
-        // 初始化
-        function init() {
-            loadApiKey();
-            loadFiguresData();
+        // ==================== 缓存管理 ====================
+
+        const PREFETCH_KEY = 'prefetched_figure';
+
+        // 保存预加载数据
+        function savePrefetchedData(name, data) {
+            try {
+                localStorage.setItem(PREFETCH_KEY, JSON.stringify({
+                    name: name,
+                    data: data,
+                    timestamp: Date.now()
+                }));
+                console.log(`已缓存人物: ${name}`);
+            } catch (e) {
+                console.error('缓存保存失败:', e);
+            }
         }
 
-        // 加载 API Key
+        // 获取预加载数据
+        function getPrefetchedData() {
+            try {
+                const cached = localStorage.getItem(PREFETCH_KEY);
+                if (!cached) return null;
+
+                const parsed = JSON.parse(cached);
+                // 缓存不限时
+                return parsed;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // 清除预加载数据
+        function clearPrefetchedData() {
+            localStorage.removeItem(PREFETCH_KEY);
+        }
+
+        // ==================== 初始化 ====================
+
+        function init() {
+            loadApiKey();
+            loadFiguresData().then(() => {
+                // 数据加载完成后，检查是否有预加载数据
+                if (apiKey) {
+                    const cached = getPrefetchedData();
+                    if (cached) {
+                        // 有缓存，立即展示
+                        displayCachedFigure(cached);
+                        // 后台预加载下一个
+                        prefetchNextFigure();
+                    } else {
+                        // 无缓存，显示引导
+                        showWelcomeMessage();
+                        // 后台预加载
+                        prefetchNextFigure();
+                    }
+                } else {
+                    showWelcomeMessage();
+                }
+            });
+        }
+
+        // 显示欢迎消息
+        function showWelcomeMessage() {
+            personNameEl.textContent = '点击下方按钮开始';
+            countInfoEl.textContent = `（共 ${FIGURES.length} 位历史人物）`;
+            aiContentEl.innerHTML = '<div class="no-content">点击"换一个"按钮开始探索</div>';
+        }
+
+        // 显示缓存的人物
+        function displayCachedFigure(cached) {
+            currentName = cached.name;
+            personNameEl.textContent = cached.name;
+            countInfoEl.textContent = `（共 ${FIGURES.length} 位历史人物）`;
+            renderContent(cached.data);
+        }
+
+        // ==================== API Key 管理 ====================
+
         function loadApiKey() {
             apiKey = localStorage.getItem('qwen_api_key') || '';
             updateSettingsBtnState();
@@ -540,7 +614,6 @@
             }
         }
 
-        // 更新设置按钮状态
         function updateSettingsBtnState() {
             if (apiKey) {
                 settingsBtn.classList.add('configured');
@@ -549,18 +622,15 @@
             }
         }
 
-        // 打开设置弹窗
         function openSettingsModal() {
             apiKeyInput.value = apiKey;
             settingsModal.classList.add('active');
         }
 
-        // 关闭设置弹窗
         function closeSettingsModal() {
             settingsModal.classList.remove('active');
         }
 
-        // 保存 API Key
         function saveApiKey() {
             const key = apiKeyInput.value.trim();
             if (!key) {
@@ -571,25 +641,44 @@
             localStorage.setItem('qwen_api_key', key);
             updateSettingsBtnState();
             closeSettingsModal();
+
+            // 保存 API Key 后，开始预加载
+            if (FIGURES.length > 0) {
+                const cached = getPrefetchedData();
+                if (cached) {
+                    displayCachedFigure(cached);
+                    prefetchNextFigure();
+                } else {
+                    prefetchNextFigure();
+                }
+            }
         }
 
-        // 随机选择人物
-        function getRandomFigure() {
-            const index = Math.floor(Math.random() * FIGURES.length);
-            return FIGURES[index];
+        // ==================== 随机人物 ====================
+
+        function getRandomFigure(excludeName = null) {
+            if (FIGURES.length === 0) return null;
+            if (FIGURES.length === 1) return FIGURES[0];
+
+            let name;
+            do {
+                const index = Math.floor(Math.random() * FIGURES.length);
+                name = FIGURES[index];
+            } while (name === excludeName);
+
+            return name;
         }
 
-        // 显示加载状态
+        // ==================== UI 渲染 ====================
+
         function showLoading() {
             aiContentEl.innerHTML = '<div class="loading">AI 正在生成内容...<span class="loading-dots"></span></div>';
         }
 
-        // 显示错误
         function showError(message) {
             aiContentEl.innerHTML = `<div class="error">${message}</div>`;
         }
 
-        // 获取置信度 CSS 类
         function getConfidenceClass(confidence) {
             const c = confidence?.toLowerCase();
             if (c === '高') return 'confidence-high confidence-dot-high';
@@ -597,7 +686,6 @@
             return 'confidence-low confidence-dot-low';
         }
 
-        // 渲染基本信息
         function renderBasicInfo(info) {
             const fields = [
                 { key: 'name', label: '姓名' },
@@ -630,7 +718,6 @@
             return html;
         }
 
-        // 渲染时间线
         function renderTimeline(timeline) {
             if (!timeline || !timeline.length) return '';
 
@@ -653,15 +740,12 @@
             return html;
         }
 
-        // 渲染流式文本
         function renderStreamingText(text) {
             aiContentEl.innerHTML = `<div class="streaming-cursor">${text.replace(/\n/g, '<br>')}</div>`;
         }
 
-        // 渲染最终内容
         function renderContent(data) {
             try {
-                // 尝试解析 JSON
                 const parsed = JSON.parse(data);
 
                 let html = '';
@@ -678,12 +762,12 @@
                     aiContentEl.innerHTML = `<p>${data.replace(/\n/g, '<br>')}</p>`;
                 }
             } catch (e) {
-                // JSON 解析失败，直接显示文本
                 aiContentEl.innerHTML = `<p>${data.replace(/\n/g, '<br>')}</p>`;
             }
         }
 
-        // Prompt 模板
+        // ==================== Prompt ====================
+
         function buildPrompt(name) {
             return `你是一位严谨的历史学者，擅长考证史料。请为以下历史人物生成详细的生平资料。
 
@@ -730,30 +814,43 @@ ${name}
 ## 时间线要求
 1. 年龄根据生卒年推算，无法确定则写"年龄不详"
 2. 每个事件必须标注出处，不确定则写"出处不详"
-3. 事件描述要详细，包括背景、经过、结果
-4. 至少列出5-10个重要事件
-5. 优先选择史料明确记载的事件
+3. 优先选择史料明确记载的事件
+4. **总计至少 8-12 个事件**，必须覆盖以下人生阶段：
+   - 出生与早年（出生、家庭背景、启蒙教育）：1-2 个事件
+   - 青年时期（求学、游历、初入社会）：2-3 个事件
+   - 壮年时期（事业高峰、重大成就、关键转折）：3-4 个事件
+   - 晚年与去世（晚年生活、去世、身后评价）：2-3 个事件
+5. **每个事件描述不少于 150 字**，必须包含：
+   - 背景交代（时代背景、人物关系、前因后果）
+   - 详细经过（具体言行、关键对话、重要细节）
+   - 结果与影响（直接结果、历史影响、后世评价）
 
 请只输出 JSON，不要输出任何其他文字。`;
         }
 
-        // 获取 API URL（支持 CORS 代理）
+        // ==================== API 调用 ====================
+
         function getApiUrl() {
             const apiEndpoint = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            // 本地直接调用，线上使用 CORS 代理
             return isLocal ? apiEndpoint : `https://corsproxy.io/?url=${encodeURIComponent(apiEndpoint)}`;
         }
 
-        // 调用通义千问 API（流式）
-        async function callQwenAPI(name) {
+        // 调用 API（支持流式显示和静默预加载）
+        async function callQwenAPI(name, options = {}) {
+            const { silent = false, onStream = null } = options;
+
             if (!apiKey) {
-                openSettingsModal();
-                showError('请先设置 API Key');
-                return;
+                if (!silent) {
+                    openSettingsModal();
+                    showError('请先设置 API Key');
+                }
+                return null;
             }
 
-            showLoading();
+            if (!silent) {
+                showLoading();
+            }
 
             const url = getApiUrl();
             const prompt = buildPrompt(name);
@@ -796,16 +893,18 @@ ${name}
                         errorMsg = errorText || response.statusText;
                     }
 
-                    if (response.status === 400) {
-                        showError(`请求参数错误<br><small>${errorMsg}</small>`);
-                    } else if (response.status === 401 || response.status === 403) {
-                        showError(`API Key 无效，请检查设置<br><small>${errorMsg}</small>`);
-                    } else if (response.status === 429) {
-                        showError(`请求过于频繁，请稍后再试<br><small>${errorMsg}</small>`);
-                    } else {
-                        showError(`API 调用失败 (${response.status})<br><small>${errorMsg}</small>`);
+                    if (!silent) {
+                        if (response.status === 400) {
+                            showError(`请求参数错误<br><small>${errorMsg}</small>`);
+                        } else if (response.status === 401 || response.status === 403) {
+                            showError(`API Key 无效，请检查设置<br><small>${errorMsg}</small>`);
+                        } else if (response.status === 429) {
+                            showError(`请求过于频繁，请稍后再试<br><small>${errorMsg}</small>`);
+                        } else {
+                            showError(`API 调用失败 (${response.status})<br><small>${errorMsg}</small>`);
+                        }
                     }
-                    return;
+                    return null;
                 }
 
                 // 流式读取
@@ -820,7 +919,6 @@ ${name}
 
                     buffer += decoder.decode(value, { stream: true });
 
-                    // 解析 SSE 数据
                     const lines = buffer.split('\n');
                     buffer = lines.pop() || '';
 
@@ -836,7 +934,12 @@ ${name}
 
                                 if (content) {
                                     fullContent = content;
-                                    renderStreamingText(fullContent);
+                                    // 流式显示（仅非静默模式）
+                                    if (!silent && onStream) {
+                                        onStream(fullContent);
+                                    } else if (!silent) {
+                                        renderStreamingText(fullContent);
+                                    }
                                 }
                             } catch (e) {
                                 // 忽略解析错误
@@ -845,36 +948,63 @@ ${name}
                     }
                 }
 
-                // 渲染最终内容
                 if (fullContent) {
-                    // 提取 JSON 部分
                     const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        renderContent(jsonMatch[0]);
-                    } else {
-                        renderContent(fullContent);
+                    const jsonData = jsonMatch ? jsonMatch[0] : fullContent;
+
+                    if (!silent) {
+                        renderContent(jsonData);
                     }
+
+                    return jsonData;
                 } else {
-                    showError('AI 未返回有效内容');
+                    if (!silent) {
+                        showError('AI 未返回有效内容');
+                    }
+                    return null;
                 }
 
             } catch (error) {
                 console.error('API call error:', error);
                 clearTimeout(timeoutId);
 
-                let errorMsg = '';
-                if (error.name === 'AbortError') {
-                    errorMsg = '请求超时<br><small>请检查网络连接后重试</small>';
-                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    errorMsg = `网络请求失败<br><small>可能是 CORS 限制或网络问题</small>`;
-                } else {
-                    errorMsg = `网络请求失败<br><small>${error.message}</small>`;
+                if (!silent) {
+                    let errorMsg = '';
+                    if (error.name === 'AbortError') {
+                        errorMsg = '请求超时<br><small>请检查网络连接后重试</small>';
+                    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        errorMsg = `网络请求失败<br><small>可能是 CORS 限制或网络问题</small>`;
+                    } else {
+                        errorMsg = `网络请求失败<br><small>${error.message}</small>`;
+                    }
+                    showError(errorMsg);
                 }
-                showError(errorMsg);
+                return null;
             }
         }
 
-        // 加载随机人物
+        // ==================== 预加载 ====================
+
+        async function prefetchNextFigure() {
+            if (isPrefetching || !apiKey || FIGURES.length === 0) return;
+
+            isPrefetching = true;
+            console.log('开始预加载下一个人物...');
+
+            // 选择一个不同于当前人物的名字
+            const nextName = getRandomFigure(currentName);
+
+            const data = await callQwenAPI(nextName, { silent: true });
+
+            if (data) {
+                savePrefetchedData(nextName, data);
+            }
+
+            isPrefetching = false;
+        }
+
+        // ==================== 加载人物 ====================
+
         async function loadRandomFigure() {
             if (FIGURES.length === 0) {
                 personNameEl.textContent = '数据加载中...';
@@ -889,17 +1019,40 @@ ${name}
             refreshBtn.disabled = true;
             refreshBtn.textContent = '加载中...';
 
-            currentName = getRandomFigure();
-            personNameEl.textContent = currentName;
-            countInfoEl.textContent = `（共 ${FIGURES.length} 位历史人物）`;
+            // 先检查是否有预加载数据
+            const cached = getPrefetchedData();
 
-            await callQwenAPI(currentName);
+            if (cached && cached.name !== currentName) {
+                // 有缓存且不是当前人物，立即展示
+                displayCachedFigure(cached);
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '换一个';
 
-            refreshBtn.disabled = false;
-            refreshBtn.textContent = '换一个';
+                // 后台预加载下一个
+                prefetchNextFigure();
+            } else {
+                // 无缓存或缓存过期，实时加载
+                currentName = getRandomFigure(currentName);
+                personNameEl.textContent = currentName;
+                countInfoEl.textContent = `（共 ${FIGURES.length} 位历史人物）`;
+
+                const data = await callQwenAPI(currentName);
+
+                if (data) {
+                    // 保存到缓存（以备下次使用）
+                    savePrefetchedData(currentName, data);
+                }
+
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '换一个';
+
+                // 预加载下一个
+                prefetchNextFigure();
+            }
         }
 
-        // 加载人物数据
+        // ==================== 加载人物数据 ====================
+
         async function loadFiguresData() {
             try {
                 const response = await fetch('figures.json');
@@ -912,7 +1065,8 @@ ${name}
             }
         }
 
-        // 点击弹窗外部关闭
+        // ==================== 事件监听 ====================
+
         settingsModal.addEventListener('click', (e) => {
             if (e.target === settingsModal) {
                 closeSettingsModal();
