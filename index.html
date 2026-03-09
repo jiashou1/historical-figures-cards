@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史人物小卡片</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* 设置按钮 / Settings button */
+        .settings-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .settings-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .settings-btn.configured {
+            background: rgba(76, 175, 80, 0.4);
+        }
+
+        .name-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .person-name {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-refresh:active {
+            transform: translateY(0);
+        }
+
+        .btn-refresh:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .count-info {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* 内容卡片 / Content card */
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .content-card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            color: #333;
+        }
+
+        .ai-content {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #555;
+            min-height: 200px;
+        }
+
+        /* 基本信息 / Basic info */
+        .basic-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .basic-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 时间线 / Timeline */
+        .timeline {
+            margin-top: 20px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 30px;
+            padding-bottom: 25px;
+            border-left: 2px solid #e0e0e0;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+            border-left-color: transparent;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+        }
+
+        .timeline-year {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .timeline-age {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .timeline-source {
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .timeline-desc {
+            color: #555;
+            line-height: 1.7;
+        }
+
+        /* 置信度颜色 / Confidence colors */
+        .confidence-high {
+            color: #4caf50;
+        }
+
+        .confidence-medium {
+            color: #ff9800;
+        }
+
+        .confidence-low {
+            color: #f44336;
+        }
+
+        .confidence-dot-high::before {
+            content: '🟢';
+            margin-right: 4px;
+        }
+
+        .confidence-dot-medium::before {
+            content: '🟡';
+            margin-right: 4px;
+        }
+
+        .confidence-dot-low::before {
+            content: '🔴';
+            margin-right: 4px;
+        }
+
+        /* 加载状态 / Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .loading-dots::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ddd;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 流式输出光标 / Streaming cursor */
+        .streaming-cursor::after {
+            content: '▌';
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .no-content {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* 弹窗 / Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal p {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            transition: border-color 0.2s;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-btn-cancel {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .modal-btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn-save:hover {
+            opacity: 0.9;
+        }
+
+        .modal-link {
+            font-size: 0.85rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .modal-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 错误提示 / Error message */
+        .error {
+            text-align: center;
+            padding: 30px;
+            color: #e53935;
+            background: #ffebee;
+            border-radius: 10px;
+        }
+
+        /* 底部提示 / Footer notice */
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            opacity: 0.9;
+        }
+
+        .footer-notice {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .footer-notice-warning {
+            margin-bottom: 10px;
+        }
+
+        .footer-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+        }
+
+        .footer-info {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="settings-btn" id="settingsBtn" onclick="openSettingsModal()" title="设置 API Key / Set API Key">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                </svg>
+            </button>
+            <h1>🎲 历史人物小卡片</h1>
+            <p>每天认识一位历史人物</p>
+        </div>
+
+        <div class="name-card">
+            <div class="person-name" id="personName">点击下方按钮开始</div>
+            <div class="count-info" id="countInfo"></div>
+            <button class="btn-refresh" id="refreshBtn" onclick="loadRandomFigure()">
+                换一个
+            </button>
+        </div>
+
+        <div class="content-card">
+            <h2>📜 人物生平</h2>
+            <div class="ai-content" id="aiContent">
+                <div class="no-content">点击"换一个"按钮开始探索</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-notice">
+                <div class="footer-notice-warning">
+                    ⚠️ <strong>温馨提示</strong>：本内容由 AI 生成，可能存在事实性错误，请以正规史料为准，仅供参考学习。
+                </div>
+                <div class="footer-legend">
+                    <span class="legend-item"><span>🟢</span> 高置信度</span>
+                    <span class="legend-item"><span>🟡</span> 中置信度</span>
+                    <span class="legend-item"><span>🔴</span> 低置信度/存疑</span>
+                </div>
+            </div>
+            <div class="footer-info">
+                数据来源：历史名人大全 | AI 模型：通义千问 qwen-max
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 / Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <h3>⚙️ 设置 API Key</h3>
+            <p>
+                请输入你的通义千问 API Key。<br>
+                <a href="https://dashscope.console.aliyun.com/apiKey" target="_blank" class="modal-link">点击这里获取 API Key</a>
+            </p>
+            <input type="password" id="apiKeyInput" placeholder="sk-xxxxxxxxxxxxxxxx">
+            <p style="font-size: 0.8rem; color: #999; margin-bottom: 15px;">
+                API Key 将保存在浏览器本地，不会上传到任何服务器。
+            </p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeSettingsModal()">取消</button>
+                <button class="modal-btn modal-btn-save" onclick="saveApiKey()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 历史人物数据 / Historical figures data
+        const FIGURES = [];
+
+        // DOM 元素 / DOM elements
+        const personNameEl = document.getElementById('personName');
+        const countInfoEl = document.getElementById('countInfo');
+        const aiContentEl = document.getElementById('aiContent');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+
+        // 当前人物 / Current figure
+        let currentName = '';
+        // API Key
+        let apiKey = '';
+
+        // 初始化 / Initialize
+        function init() {
+            loadApiKey();
+            loadFiguresData();
+        }
+
+        // 加载 API Key / Load API Key
+        function loadApiKey() {
+            apiKey = localStorage.getItem('qwen_api_key') || '';
+            updateSettingsBtnState();
+            if (apiKey) {
+                apiKeyInput.value = apiKey;
+            }
+        }
+
+        // 更新设置按钮状态 / Update settings button state
+        function updateSettingsBtnState() {
+            if (apiKey) {
+                settingsBtn.classList.add('configured');
+            } else {
+                settingsBtn.classList.remove('configured');
+            }
+        }
+
+        // 打开设置弹窗 / Open settings modal
+        function openSettingsModal() {
+            apiKeyInput.value = apiKey;
+            settingsModal.classList.add('active');
+        }
+
+        // 关闭设置弹窗 / Close settings modal
+        function closeSettingsModal() {
+            settingsModal.classList.remove('active');
+        }
+
+        // 保存 API Key / Save API Key
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                alert('请输入 API Key / Please enter API Key');
+                return;
+            }
+            apiKey = key;
+            localStorage.setItem('qwen_api_key', key);
+            updateSettingsBtnState();
+            closeSettingsModal();
+        }
+
+        // 随机选择人物 / Randomly select a figure
+        function getRandomFigure() {
+            const index = Math.floor(Math.random() * FIGURES.length);
+            return FIGURES[index];
+        }
+
+        // 显示加载状态 / Show loading state
+        function showLoading() {
+            aiContentEl.innerHTML = '<div class="loading">AI 正在生成内容...<span class="loading-dots"></span></div>';
+        }
+
+        // 显示错误 / Show error
+        function showError(message) {
+            aiContentEl.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // 获取置信度 CSS 类 / Get confidence CSS class
+        function getConfidenceClass(confidence) {
+            const c = confidence?.toLowerCase();
+            if (c === '高') return 'confidence-high confidence-dot-high';
+            if (c === '中') return 'confidence-medium confidence-dot-medium';
+            return 'confidence-low confidence-dot-low';
+        }
+
+        // 渲染基本信息 / Render basic info
+        function renderBasicInfo(info) {
+            const fields = [
+                { key: 'name', label: '姓名' },
+                { key: 'dynasty', label: '朝代' },
+                { key: 'birthDeath', label: '生卒年' },
+                { key: 'courtesyName', label: '字' },
+                { key: 'pseudonym', label: '号' },
+                { key: 'hometown', label: '籍贯' },
+                { key: 'identity', label: '身份' }
+            ];
+
+            let html = '<div class="basic-info">';
+            fields.forEach(field => {
+                const item = info[field.key];
+                if (item && item.value) {
+                    const confClass = getConfidenceClass(item.confidence);
+                    let value = item.value;
+                    if (item.note) {
+                        value += ` <span style="font-size:0.85rem;color:#888;">(${item.note})</span>`;
+                    }
+                    html += `
+                        <div class="info-item">
+                            <div class="info-label">${field.label}</div>
+                            <div class="info-value ${confClass}">${value}</div>
+                        </div>
+                    `;
+                }
+            });
+            html += '</div>';
+            return html;
+        }
+
+        // 渲染时间线 / Render timeline
+        function renderTimeline(timeline) {
+            if (!timeline || !timeline.length) return '';
+
+            let html = '<h3 style="margin: 20px 0 15px; color: #333;">【生平时间线】</h3>';
+            html += '<div class="timeline">';
+
+            timeline.forEach(item => {
+                const confClass = getConfidenceClass(item.confidence);
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-year ${confClass}">${item.year || '年份不详'}</div>
+                        <div class="timeline-age">${item.age || '年龄不详'}</div>
+                        <div class="timeline-source ${confClass}">出处：${item.source || '出处不详'}</div>
+                        <div class="timeline-desc">${item.description || ''}</div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // 渲染流式文本 / Render streaming text
+        function renderStreamingText(text) {
+            aiContentEl.innerHTML = `<div class="streaming-cursor">${text.replace(/\n/g, '<br>')}</div>`;
+        }
+
+        // 渲染最终内容 / Render final content
+        function renderContent(data) {
+            try {
+                // 尝试解析 JSON / Try to parse JSON
+                const parsed = JSON.parse(data);
+
+                let html = '';
+                if (parsed.basicInfo) {
+                    html += renderBasicInfo(parsed.basicInfo);
+                }
+                if (parsed.timeline) {
+                    html += renderTimeline(parsed.timeline);
+                }
+
+                if (html) {
+                    aiContentEl.innerHTML = html;
+                } else {
+                    aiContentEl.innerHTML = `<p>${data.replace(/\n/g, '<br>')}</p>`;
+                }
+            } catch (e) {
+                // JSON 解析失败，直接显示文本 / JSON parse failed, show text directly
+                aiContentEl.innerHTML = `<p>${data.replace(/\n/g, '<br>')}</p>`;
+            }
+        }
+
+        // Prompt 模板 / Prompt template
+        function buildPrompt(name) {
+            return `你是一位严谨的历史学者，擅长考证史料。请为以下历史人物生成详细的生平资料。
+
+## 人物姓名
+${name}
+
+## 重要约束
+1. **诚实原则**：不确定的信息必须标注为"存疑"，绝不编造
+2. **出处真实**：只引用真实存在的史书，不确定时写"出处不详"
+3. **区分事实与推断**：明确区分"史书记载"与"后世推断"
+4. **争议说明**：如史料有争议，简要说明
+
+## 置信度标注规则
+每条信息后标注置信度：
+- 【高】史料明确记载，无争议
+- 【中】有记载但存在争议或不确定
+- 【低】基于推断、传说，或出处不详
+
+## 输出格式
+
+请严格按照以下 JSON 格式输出，不要输出其他内容：
+
+{
+  "basicInfo": {
+    "name": {"value": "姓名", "confidence": "高"},
+    "dynasty": {"value": "朝代", "confidence": "高"},
+    "birthDeath": {"value": "生卒年", "confidence": "中", "note": "如有争议在此说明"},
+    "courtesyName": {"value": "字", "confidence": "高"},
+    "pseudonym": {"value": "号", "confidence": "高"},
+    "hometown": {"value": "籍贯", "confidence": "中"},
+    "identity": {"value": "主要身份", "confidence": "高"}
+  },
+  "timeline": [
+    {
+      "year": "年份",
+      "age": "约xx岁",
+      "source": "出处",
+      "confidence": "高",
+      "description": "详细的事件经过描述..."
+    }
+  ]
+}
+
+## 时间线要求
+1. 年龄根据生卒年推算，无法确定则写"年龄不详"
+2. 每个事件必须标注出处，不确定则写"出处不详"
+3. 事件描述要详细，包括背景、经过、结果
+4. 至少列出5-10个重要事件
+5. 优先选择史料明确记载的事件
+
+请只输出 JSON，不要输出任何其他文字。`;
+        }
+
+        // 调用通义千问 API（流式）/ Call Qwen API (streaming)
+        async function callQwenAPI(name) {
+            if (!apiKey) {
+                openSettingsModal();
+                showError('请先设置 API Key / Please set API Key first');
+                return;
+            }
+
+            showLoading();
+
+            // 使用本地代理服务器避免 CORS 问题 / Use local proxy to avoid CORS issues
+            const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const url = isLocalServer
+                ? '/api/qwen'
+                : 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
+            const prompt = buildPrompt(name);
+
+            // 检测是否为 file:// 协议
+            if (window.location.protocol === 'file:') {
+                showError(`请使用本地服务器运行，不要直接打开 HTML 文件<br><small>请运行: python3 -m http.server 8080<br>然后访问: http://localhost:8080</small>`);
+                return;
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'X-DashScope-SSE': 'enable'
+                    },
+                    body: JSON.stringify({
+                        model: 'qwen-max',
+                        input: {
+                            messages: [
+                                { role: 'user', content: prompt }
+                            ]
+                        },
+                        parameters: {
+                            enable_search: true,
+                            result_format: 'message'
+                        }
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMsg = response.statusText;
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMsg = errorData.message || errorData.code || errorData.error?.message || response.statusText;
+                    } catch (e) {
+                        errorMsg = errorText || response.statusText;
+                    }
+
+                    console.error('API Error Response:', errorText);
+
+                    if (response.status === 400) {
+                        showError(`请求参数错误 / Bad Request<br><small>${errorMsg}</small>`);
+                    } else if (response.status === 401 || response.status === 403) {
+                        showError(`API Key 无效，请检查设置 / Invalid API Key<br><small>${errorMsg}</small>`);
+                    } else if (response.status === 429) {
+                        showError(`请求过于频繁，请稍后再试 / Rate limited<br><small>${errorMsg}</small>`);
+                    } else {
+                        showError(`API 调用失败 (${response.status}) / API call failed<br><small>${errorMsg}</small>`);
+                    }
+                    return;
+                }
+
+                // 流式读取 / Stream reading
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullContent = '';
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // 解析 SSE 数据 / Parse SSE data
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ''; // 保留未完成的行
+
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            try {
+                                const jsonStr = line.slice(5).trim();
+                                if (!jsonStr || jsonStr === '[DONE]') continue;
+
+                                const data = JSON.parse(jsonStr);
+                                const content = data.output?.choices?.[0]?.message?.content ||
+                                               data.output?.text || '';
+
+                                if (content) {
+                                    fullContent = content;
+                                    renderStreamingText(fullContent);
+                                }
+                            } catch (e) {
+                                // 忽略解析错误 / Ignore parse errors
+                            }
+                        }
+                    }
+                }
+
+                // 渲染最终内容 / Render final content
+                if (fullContent) {
+                    // 提取 JSON 部分 / Extract JSON part
+                    const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        renderContent(jsonMatch[0]);
+                    } else {
+                        renderContent(fullContent);
+                    }
+                } else {
+                    showError('AI 未返回有效内容 / AI returned no valid content');
+                }
+
+            } catch (error) {
+                console.error('API call error:', error);
+                clearTimeout(timeoutId);
+
+                let errorMsg = '';
+                if (error.name === 'AbortError') {
+                    errorMsg = '请求超时 / Request timeout<br><small>请检查网络连接后重试</small>';
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMsg = `网络请求失败 / Network error<br><small>可能原因：<br>1. 浏览器 CORS 策略阻止了请求<br>2. 网络连接问题<br><br>建议：请确保使用本地服务器运行（如 python3 -m http.server 8080）</small>`;
+                } else if (error.message.includes('CORS') || error.message.includes('cross-origin')) {
+                    errorMsg = `跨域请求被阻止 / CORS blocked<br><small>请使用本地代理服务器或后端转发请求</small>`;
+                } else {
+                    errorMsg = `网络请求失败 / Network error<br><small>${error.message}</small>`;
+                }
+                showError(errorMsg);
+            }
+        }
+
+        // 加载随机人物 / Load random figure
+        async function loadRandomFigure() {
+            if (FIGURES.length === 0) {
+                personNameEl.textContent = '数据加载中... / Loading data...';
+                return;
+            }
+
+            if (!apiKey) {
+                openSettingsModal();
+                return;
+            }
+
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '加载中... / Loading...';
+
+            currentName = getRandomFigure();
+            personNameEl.textContent = currentName;
+            countInfoEl.textContent = `（共 ${FIGURES.length} 位历史人物 / ${FIGURES.length} historical figures）`;
+
+            await callQwenAPI(currentName);
+
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = '换一个';
+        }
+
+        // 加载人物数据 / Load figures data
+        async function loadFiguresData() {
+            try {
+                const response = await fetch('figures.json');
+                const data = await response.json();
+                FIGURES.push(...data);
+                console.log(`已加载 ${FIGURES.length} 位历史人物 / Loaded ${FIGURES.length} figures`);
+            } catch (error) {
+                console.error('Failed to load figures data:', error);
+                personNameEl.textContent = '数据加载失败 / Data loading failed';
+            }
+        }
+
+        // 点击弹窗外部关闭 / Close modal when clicking outside
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                closeSettingsModal();
+            }
+        });
+
+        // 初始化 / Initialize
+        init();
+    </script>
+</body>
+</html>
