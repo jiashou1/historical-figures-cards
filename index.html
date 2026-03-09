@@ -679,59 +679,82 @@
             aiContentEl.innerHTML = `<div class="error">${message}</div>`;
         }
 
-        function getConfidenceClass(confidence) {
-            const c = confidence?.toLowerCase();
-            if (c === '高') return 'confidence-high confidence-dot-high';
-            if (c === '中') return 'confidence-medium confidence-dot-medium';
+        function getReliabilityClass(reliability) {
+            const r = reliability?.toLowerCase();
+            if (r === '高') return 'confidence-high confidence-dot-high';
+            if (r === '中') return 'confidence-medium confidence-dot-medium';
             return 'confidence-low confidence-dot-low';
         }
 
-        function renderBasicInfo(info) {
-            const fields = [
-                { key: 'name', label: '姓名' },
-                { key: 'dynasty', label: '朝代' },
-                { key: 'birthDeath', label: '生卒年' },
-                { key: 'courtesyName', label: '字' },
-                { key: 'pseudonym', label: '号' },
-                { key: 'hometown', label: '籍贯' },
-                { key: 'identity', label: '身份' }
-            ];
+        // 渲染基本信息（新结构：metadata）
+        function renderBasicInfo(metadata) {
+            const { name, dynasty, years, tags } = metadata;
 
-            let html = '<div class="basic-info">';
-            fields.forEach(field => {
-                const item = info[field.key];
-                if (item && item.value) {
-                    const confClass = getConfidenceClass(item.confidence);
-                    let value = item.value;
-                    if (item.note) {
-                        value += ` <span style="font-size:0.85rem;color:#888;">(${item.note})</span>`;
-                    }
-                    html += `
-                        <div class="info-item">
-                            <div class="info-label">${field.label}</div>
-                            <div class="info-value ${confClass}">${value}</div>
-                        </div>
-                    `;
+            // 格式化生卒年
+            let birthDeathStr = '不详';
+            if (years && (years.birth || years.death)) {
+                const birth = years.birth ? (years.birth < 0 ? `公元前${Math.abs(years.birth)}年` : `${years.birth}年`) : '?';
+                const death = years.death ? (years.death < 0 ? `公元前${Math.abs(years.death)}年` : `${years.death}年`) : '?';
+                birthDeathStr = `${birth} — ${death}`;
+                if (years.isApproximate) {
+                    birthDeathStr += '（约）';
                 }
-            });
-            html += '</div>';
+            }
+
+            // 格式化标签
+            const tagsStr = tags && tags.length > 0 ? tags.join('、') : '不详';
+
+            const html = `
+                <div class="basic-info">
+                    <div class="info-item">
+                        <div class="info-label">姓名</div>
+                        <div class="info-value confidence-high confidence-dot-high">${name || '不详'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">朝代</div>
+                        <div class="info-value confidence-high confidence-dot-high">${dynasty || '不详'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">生卒年</div>
+                        <div class="info-value confidence-medium confidence-dot-medium">${birthDeathStr}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">身份</div>
+                        <div class="info-value confidence-high confidence-dot-high">${tagsStr}</div>
+                    </div>
+                </div>
+            `;
             return html;
         }
 
-        function renderTimeline(timeline) {
-            if (!timeline || !timeline.length) return '';
+        // 渲染生平时间线（新结构：biography）
+        function renderTimeline(biography) {
+            if (!biography || !biography.length) return '';
 
             let html = '<h3 style="margin: 20px 0 15px; color: #333;">【生平时间线】</h3>';
             html += '<div class="timeline">';
 
-            timeline.forEach(item => {
-                const confClass = getConfidenceClass(item.confidence);
+            biography.forEach(item => {
+                const relClass = getReliabilityClass(item.reliability);
+
+                // 格式化年份
+                let yearStr = '年份不详';
+                if (item.year && item.year !== 0) {
+                    yearStr = item.year < 0 ? `公元前${Math.abs(item.year)}年` : `${item.year}年`;
+                }
+
+                // 格式化年龄
+                let ageStr = '年龄不详';
+                if (item.age !== undefined && item.age !== null) {
+                    ageStr = `${item.age}岁`;
+                }
+
                 html += `
                     <div class="timeline-item">
-                        <div class="timeline-year ${confClass}">${item.year || '年份不详'}</div>
-                        <div class="timeline-age">${item.age || '年龄不详'}</div>
-                        <div class="timeline-source ${confClass}">出处：${item.source || '出处不详'}</div>
-                        <div class="timeline-desc">${item.description || ''}</div>
+                        <div class="timeline-year ${relClass}">${item.title || yearStr}</div>
+                        <div class="timeline-age">${yearStr} · ${ageStr}</div>
+                        <div class="timeline-source ${relClass}">出处：${item.source || '出处不详'}</div>
+                        <div class="timeline-desc">${item.content || ''}</div>
                     </div>
                 `;
             });
@@ -749,11 +772,12 @@
                 const parsed = JSON.parse(data);
 
                 let html = '';
-                if (parsed.basicInfo) {
-                    html += renderBasicInfo(parsed.basicInfo);
+                // 新结构：metadata + biography
+                if (parsed.metadata) {
+                    html += renderBasicInfo(parsed.metadata);
                 }
-                if (parsed.timeline) {
-                    html += renderTimeline(parsed.timeline);
+                if (parsed.biography) {
+                    html += renderTimeline(parsed.biography);
                 }
 
                 if (html) {
@@ -769,63 +793,49 @@
         // ==================== Prompt ====================
 
         function buildPrompt(name) {
-            return `你是一位严谨的历史学者，擅长考证史料。请为以下历史人物生成详细的生平资料。
+            return `# Role
+你是一位精通《二十四史》与考古发现的学术级历史学家。你的任务是为前端可视化系统提供结构化、高可信度的历史人物数据。
 
-## 人物姓名
-${name}
+# Task
+根据输入的「${name}」，生成其生平轨迹 JSON。
 
-## 重要约束
-1. **诚实原则**：不确定的信息必须标注为"存疑"，绝不编造
-2. **出处真实**：只引用真实存在的史书，不确定时写"出处不详"
-3. **区分事实与推断**：明确区分"史书记载"与"后世推断"
-4. **争议说明**：如史料有争议，简要说明
+# Constraints
+1. **真实性基准**：严禁编造对话和细节。若史料缺失，描述宁可简短（50-100字）也不得注水。
+2. **计算逻辑**：
+   - 必须先提取 birthYear（公历数字，公元前用负数）。
+   - 事件 age = eventYear - birthYear（不计虚岁，仅作数值差）。
+3. **JSON 稳定性**：
+   - 禁止任何首尾废话。
+   - 所有的 JSON Key 必须严格一致。
+   - 遇到无法确定的年份，year 字段填写 0，并在 note 中说明。
 
-## 置信度标注规则
-每条信息后标注置信度：
-- 【高】史料明确记载，无争议
-- 【中】有记载但存在争议或不确定
-- 【低】基于推断、传说，或出处不详
-
-## 输出格式
-
-请严格按照以下 JSON 格式输出，不要输出其他内容：
-
+# JSON Schema
 {
-  "basicInfo": {
-    "name": {"value": "姓名", "confidence": "高"},
-    "dynasty": {"value": "朝代", "confidence": "高"},
-    "birthDeath": {"value": "生卒年", "confidence": "中", "note": "如有争议在此说明"},
-    "courtesyName": {"value": "字", "confidence": "高"},
-    "pseudonym": {"value": "号", "confidence": "高"},
-    "hometown": {"value": "籍贯", "confidence": "中"},
-    "identity": {"value": "主要身份", "confidence": "高"}
+  "metadata": {
+    "name": "人物姓名",
+    "dynasty": "所属朝代",
+    "years": { "birth": 数字, "death": 数字, "isApproximate": 布尔值 },
+    "tags": ["标签1", "标签2"]
   },
-  "timeline": [
+  "biography": [
     {
-      "year": "年份",
-      "age": "约xx岁",
-      "source": "出处",
-      "confidence": "高",
-      "description": "详细的事件经过描述..."
+      "year": 数字,
+      "age": 数字,
+      "title": "事件短标题",
+      "content": "深度描述：包含前因、核心经过、后果影响。要求客观平实，标注争议点。每个事件描述不少于150字。",
+      "source": "具体史料篇名（如《史记·刺客列传》）",
+      "reliability": "高"
     }
   ]
 }
 
-## 时间线要求
-1. 年龄根据生卒年推算，无法确定则写"年龄不详"
-2. 每个事件必须标注出处，不确定则写"出处不详"
-3. 优先选择史料明确记载的事件
-4. **总计至少 8-12 个事件**，必须覆盖以下人生阶段：
-   - 出生与早年（出生、家庭背景、启蒙教育）：1-2 个事件
-   - 青年时期（求学、游历、初入社会）：2-3 个事件
-   - 壮年时期（事业高峰、重大成就、关键转折）：3-4 个事件
-   - 晚年与去世（晚年生活、去世、身后评价）：2-3 个事件
-5. **每个事件描述不少于 150 字**，必须包含：
-   - 背景交代（时代背景、人物关系、前因后果）
-   - 详细经过（具体言行、关键对话、重要细节）
-   - 结果与影响（直接结果、历史影响、后世评价）
+# Biography Requirements
+1. 总计至少 8-12 个事件，覆盖完整人生阶段
+2. 每个事件 content 不少于 150 字
+3. reliability 只能是：高、中、低
+4. source 必须具体到篇名，不确定写"出处不详"
 
-请只输出 JSON，不要输出任何其他文字。`;
+请直接输出 JSON 字符串，不要有任何其他文字。`;
         }
 
         // ==================== API 调用 ====================
