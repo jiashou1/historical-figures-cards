@@ -747,11 +747,6 @@ ${name}
 
             showLoading();
 
-            // 使用本地代理服务器避免 CORS 问题 / Use local proxy to avoid CORS issues
-            const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const url = isLocalServer
-                ? '/api/qwen'
-                : 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
             const prompt = buildPrompt(name);
 
             // 检测是否为 file:// 协议
@@ -760,8 +755,17 @@ ${name}
                 return;
             }
 
+            // 根据运行环境选择 API 调用方式
+            const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiEndpoint = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
+
+            // 本地使用代理，线上使用 CORS 代理服务
+            const url = isLocalServer
+                ? '/api/qwen'
+                : `https://corsproxy.io/${encodeURIComponent(apiEndpoint)}`;
+
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            const timeoutId = setTimeout(() => controller.abort(), 90000);
 
             try {
                 const response = await fetch(url, {
