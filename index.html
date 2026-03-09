@@ -742,7 +742,7 @@ ${name}
             const apiEndpoint = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation';
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             // 本地直接调用，线上使用 CORS 代理
-            return isLocal ? apiEndpoint : `https://corsproxy.io/${encodeURIComponent(apiEndpoint)}`;
+            return isLocal ? apiEndpoint : `https://corsproxy.io/?url=${encodeURIComponent(apiEndpoint)}`;
         }
 
         // 调用通义千问 API（流式）
